@@ -1,0 +1,309 @@
+---
+openapi: 3.0.3
+info:
+  title: Task Manager API
+  version: 1.0.0
+  description: タスク管理アプリケーションの API
+servers:
+- url: http://localhost:3000
+  description: 開発環境
+paths:
+  "/api/v1/tasks":
+    get:
+      summary: index
+      tags: []
+      responses:
+        '200':
+          description: returns empty array when no tasks exist
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    title:
+                      type: string
+                    description:
+                      type: string
+                      nullable: true
+                    status:
+                      type: string
+                    created_at:
+                      type: string
+                    updated_at:
+                      type: string
+                  required:
+                  - id
+                  - title
+                  - description
+                  - status
+                  - created_at
+                  - updated_at
+              example: []
+      parameters:
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+        example: pending
+    post:
+      summary: create
+      tags: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                task:
+                  type: object
+                  properties:
+                    title:
+                      type: string
+                    description:
+                      type: string
+                    status:
+                      type: string
+                  required:
+                  - title
+              required:
+              - task
+            example:
+              task:
+                title: 進行中タスク
+                description: メモ
+                status: in_progress
+      responses:
+        '201':
+          description: creates a task with status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  title:
+                    type: string
+                  description:
+                    type: string
+                    nullable: true
+                  status:
+                    type: string
+                  created_at:
+                    type: string
+                  updated_at:
+                    type: string
+                required:
+                - id
+                - title
+                - description
+                - status
+                - created_at
+                - updated_at
+              example:
+                id: 1
+                title: 進行中タスク
+                description:
+                status: in_progress
+                created_at: '2026-05-26T23:11:05.368Z'
+                updated_at: '2026-05-26T23:11:05.368Z'
+        '422':
+          description: returns 422 for invalid status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                required:
+                - errors
+              example:
+                errors:
+                - Status is not included in the list
+  "/api/v1/tasks/{id}":
+    delete:
+      summary: destroy
+      tags: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+        example: 999999
+      responses:
+        '204':
+          description: deletes a task
+        '404':
+          description: returns 404 for not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                required:
+                - error
+              example:
+                error: Task not found
+    get:
+      summary: show
+      tags: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+        example: 999999
+      responses:
+        '200':
+          description: returns a task
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  title:
+                    type: string
+                  description:
+                    type: string
+                  status:
+                    type: string
+                  created_at:
+                    type: string
+                  updated_at:
+                    type: string
+                required:
+                - id
+                - title
+                - description
+                - status
+                - created_at
+                - updated_at
+              example:
+                id: 1
+                title: テスト
+                description: メモ
+                status: in_progress
+                created_at: '2026-05-26T23:11:05.317Z'
+                updated_at: '2026-05-26T23:11:05.317Z'
+        '404':
+          description: returns 404 for not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                required:
+                - error
+              example:
+                error: Task not found
+    patch:
+      summary: update
+      tags: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+        example: 999999
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                task:
+                  type: object
+                  properties:
+                    title:
+                      type: string
+                    status:
+                      type: string
+                  required:
+                  - title
+                  - status
+              required:
+              - task
+            example:
+              task:
+                title: 更新後
+                status: in_progress
+      responses:
+        '200':
+          description: updates a task
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  title:
+                    type: string
+                  status:
+                    type: string
+                  id:
+                    type: integer
+                  description:
+                    nullable: true
+                  created_at:
+                    type: string
+                  updated_at:
+                    type: string
+                required:
+                - title
+                - status
+                - id
+                - description
+                - created_at
+                - updated_at
+              example:
+                title: 更新後
+                status: in_progress
+                id: 1
+                description:
+                created_at: '2026-05-26T23:11:05.438Z'
+                updated_at: '2026-05-26T23:11:05.451Z'
+        '404':
+          description: returns 404 for not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                required:
+                - error
+              example:
+                error: Task not found
+        '422':
+          description: returns 422 for invalid update
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                required:
+                - errors
+              example:
+                errors:
+                - Title can't be blank
