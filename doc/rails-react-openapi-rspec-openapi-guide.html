@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rails × React × OpenAPI ─ rspec-openapi 完全ガイド</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=IBM+Plex+Mono:wght@400;500;600&family=Fraunces:opsz,wght@9..144,700;9..144,900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#faf9f6;--bg-card:#fff;--bg-code:#1b1f27;--bg-code-header:#262b36;--text:#1a1a2e;--text-muted:#64748b;--text-dim:#94a3b8;--accent:#0d9488;--green:#059669;--orange:#d97706;--red:#dc2626;--blue:#2563eb;--purple:#7c3aed;--border:#e2e8f0}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);line-height:2;font-size:16px}
+.layout{display:flex;min-height:100vh}
+.sidebar{width:280px;position:fixed;top:0;left:0;height:100vh;overflow-y:auto;background:var(--bg-card);border-right:1px solid var(--border);padding:24px 0;z-index:100;transition:transform .3s}
+.sidebar-logo{padding:0 20px 20px;border-bottom:1px solid var(--border);margin-bottom:16px}
+.sidebar-logo h1{font-family:'Fraunces',serif;font-size:17px;font-weight:900;line-height:1.3}
+.sidebar-logo .sub{font-size:12px;color:var(--text-muted);margin-top:4px}
+.sidebar-logo .approach{display:inline-block;padding:2px 10px;border-radius:6px;font-size:11px;font-weight:600;background:#f0fdfa;color:#0d9488;margin-top:6px;font-family:'IBM Plex Mono',monospace}
+.sidebar-nav{padding:0 12px}
+.sidebar-chapter{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);padding:16px 12px 6px}
+.sidebar-link{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;font-size:13.5px;color:var(--text-muted);text-decoration:none;transition:all .15s;cursor:pointer;line-height:1.5}
+.sidebar-link:hover{background:#f0fdfa;color:var(--text)}
+.sidebar-link.active{background:#f0fdfa;color:var(--accent);font-weight:500}
+.sidebar-link .num{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);min-width:20px}
+.sidebar-link.active .num{color:var(--accent)}
+.main{margin-left:280px;flex:1}
+.page{display:none}.page.active{display:block}
+.page-header{padding:48px 60px 40px;border-bottom:1px solid var(--border);background:var(--bg-card)}
+.page-header .step-label{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:var(--accent);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
+.page-header h2{font-family:'Fraunces',serif;font-size:2rem;font-weight:900;line-height:1.3}
+.page-header .desc{font-size:1.05rem;color:var(--text-muted);margin-top:8px;font-weight:300}
+.content{max-width:760px;padding:40px 60px 80px}
+.content h3{font-size:1.25rem;font-weight:700;margin-top:48px;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid #f1f5f9}
+.content h4{font-size:1.05rem;font-weight:600;margin-top:32px;margin-bottom:12px}
+.content p{margin-bottom:18px;color:#334155}
+.content strong{color:var(--text)}
+.content ul,.content ol{margin:12px 0 20px 24px;color:#334155}
+.content li{margin-bottom:8px}
+.code-block{margin:20px 0 28px;border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.08);border:1px solid rgba(0,0,0,.06)}
+.code-header{display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--bg-code-header);font-family:'IBM Plex Mono',monospace;font-size:12px;color:#94a3b8}
+.lang-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.lang-ruby{background:#cc0000}.lang-yaml{background:#49a32b}.lang-ts{background:#3178c6}.lang-bash{background:#d97706}.lang-json{background:#7c3aed}
+pre{background:var(--bg-code);padding:20px;overflow-x:auto;font-family:'IBM Plex Mono',monospace;font-size:13.5px;line-height:1.75;color:#e2e8f0}
+pre code{background:none;padding:0;font-size:inherit;color:inherit}
+code{font-family:'IBM Plex Mono',monospace;font-size:.88em;background:#f1f5f9;padding:2px 7px;border-radius:4px;color:#1e293b}
+.kw{color:#ff7b72}.str{color:#a5d6ff}.cm{color:#6b7b8d;font-style:italic}.fn{color:#d2a8ff}.num{color:#79c0ff}.sym{color:#ffa657}.type{color:#7ee787}
+.callout{padding:20px 24px;border-radius:12px;margin:24px 0;font-size:14.5px;line-height:1.85;border:1px solid}
+.callout-tip{background:#ecfdf5;border-color:#bbf7d0}
+.callout-warn{background:#fffbeb;border-color:#fde68a}
+.callout-info{background:#eff6ff;border-color:#bfdbfe}
+.callout-concept{background:#f0fdfa;border-color:#99f6e4}
+.callout-label{font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.callout p:last-child{margin-bottom:0}
+.file-tree{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:24px 28px;margin:20px 0;font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:2.1;color:var(--text-muted);box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.file-tree .folder{color:var(--accent);font-weight:500}.file-tree .file{color:var(--text)}.file-tree .highlight{color:#059669;font-weight:600}.file-tree .comment{color:var(--text-dim);font-size:12px}
+.info-table{width:100%;border-collapse:collapse;margin:20px 0;font-size:14px;border-radius:12px;overflow:hidden;border:1px solid var(--border)}
+.info-table th{text-align:left;padding:12px 16px;background:#f8fafc;border-bottom:1px solid var(--border);color:var(--text-muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+.info-table td{padding:12px 16px;border-bottom:1px solid #f1f5f9;vertical-align:top}
+.info-table tr:last-child td{border-bottom:none}
+.pager{display:flex;justify-content:space-between;padding:32px 0;margin-top:40px;border-top:1px solid var(--border)}
+.pager-btn{display:flex;flex-direction:column;gap:4px;padding:16px 20px;border-radius:12px;border:1px solid var(--border);background:var(--bg-card);cursor:pointer;text-decoration:none;transition:all .15s;max-width:45%}
+.pager-btn:hover{border-color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.pager-btn .dir{font-size:12px;color:var(--text-dim)}.pager-btn .title{font-size:14px;color:var(--text);font-weight:500}
+.pager-btn.next{text-align:right;margin-left:auto}
+.menu-toggle{display:none;position:fixed;top:16px;left:16px;z-index:200;width:40px;height:40px;border-radius:10px;border:1px solid var(--border);background:var(--bg-card);box-shadow:0 4px 16px rgba(0,0,0,.08);cursor:pointer;font-size:20px;color:var(--text);align-items:center;justify-content:center}
+.progress-bar{position:fixed;bottom:0;left:280px;right:0;height:3px;background:#f1f5f9;z-index:50}
+.progress-fill{height:100%;background:var(--accent);transition:width .3s ease}
+@media(max-width:900px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0);box-shadow:0 8px 32px rgba(0,0,0,.1)}.main{margin-left:0}.menu-toggle{display:flex}.page-header,.content{padding-left:24px;padding-right:24px}.page-header h2{font-size:1.5rem}.progress-bar{left:0}}
+.annotated-line{display:flex;gap:20px;margin:12px 0;padding:14px 18px;background:#f8fafc;border-radius:10px;border:1px solid var(--border);align-items:flex-start}
+.annotated-line code{flex-shrink:0;font-size:13px;background:var(--bg-code);color:#e2e8f0;padding:4px 10px;border-radius:6px;white-space:nowrap}
+.annotated-line .explain{font-size:13.5px;color:#475569;line-height:1.6}
+</style>
+</head>
+<body>
+<button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+<div class="layout">
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <h1>Rails × React<br>× OpenAPI</h1>
+    <div class="sub">完全ハンズオンガイド</div>
+    <div class="approach">RSPEC-OPENAPI</div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="sidebar-chapter">はじめに</div>
+    <a class="sidebar-link active" data-page="0"><span class="num">00</span>このガイドについて</a>
+    <a class="sidebar-link" data-page="1"><span class="num">01</span>rspec-openapi の特徴</a>
+    <div class="sidebar-chapter">セットアップ</div>
+    <a class="sidebar-link" data-page="2"><span class="num">02</span>プロジェクト構成</a>
+    <a class="sidebar-link" data-page="3"><span class="num">03</span>Rails APIの初期設定</a>
+    <a class="sidebar-link" data-page="4"><span class="num">04</span>Reactプロジェクトの作成</a>
+    <div class="sidebar-chapter">バックエンド実装</div>
+    <a class="sidebar-link" data-page="5"><span class="num">05</span>モデルとコントローラを実装</a>
+    <a class="sidebar-link" data-page="6"><span class="num">06</span>普通のRSpecテストを書く</a>
+    <a class="sidebar-link" data-page="7"><span class="num">07</span>全CRUDのテスト</a>
+    <a class="sidebar-link" data-page="8"><span class="num">08</span>rspec-openapi の設定</a>
+    <a class="sidebar-link" data-page="9"><span class="num">09</span>スペック自動生成と確認</a>
+    <a class="sidebar-link" data-page="10"><span class="num">10</span>Swagger UIの設置</a>
+    <div class="sidebar-chapter">検証とフロントエンド</div>
+    <a class="sidebar-link" data-page="11"><span class="num">11</span>Committeeで自動検証</a>
+    <a class="sidebar-link" data-page="12"><span class="num">12</span>TypeScript型の自動生成</a>
+    <a class="sidebar-link" data-page="13"><span class="num">13</span>openapi-fetchでAPI呼び出し</a>
+    <a class="sidebar-link" data-page="14"><span class="num">14</span>TanStack Queryと統合</a>
+    <div class="sidebar-chapter">仕上げ</div>
+    <a class="sidebar-link" data-page="15"><span class="num">15</span>CIで整合性チェック</a>
+    <div class="sidebar-chapter">スペックの改善</div>
+    <a class="sidebar-link" data-page="16"><span class="num">16</span>componentsへのスキーマ分割</a>
+    <a class="sidebar-link" data-page="17"><span class="num">17</span>スペックのリファクタリング</a>
+    <a class="sidebar-link" data-page="18"><span class="num">18</span>まとめと3手法の比較</a>
+  </div>
+</nav>
+<div class="main">
+
+<!-- PAGE 0 -->
+<div class="page active" data-page="0">
+<div class="page-header"><div class="step-label">Introduction</div><h2>このガイドについて</h2><div class="desc">DSL ゼロ。既存テストからスペックを自動生成する最も手軽なアプローチ</div></div>
+<div class="content">
+<h3>🎯 rspec-openapi とは</h3>
+<p>このガイドでは <code>rspec-openapi</code> を使います。これは <strong>既存の RSpec テストを一切変更せず</strong>、テストを実行するだけで OpenAPI スペックを自動生成する gem です。RSwag のような特別な DSL は一切不要です。</p>
+
+<div class="callout callout-concept">
+<div class="callout-label">🧠 3つのアプローチの位置づけ</div>
+<p><strong>Design-First（手書き YAML）</strong>：最も正確。並行開発向き。でも YAML を書く手間がかかる。</p>
+<p><strong>Code-First / RSwag</strong>：テストに DSL でスキーマを書く。テスト = ドキュメント。</p>
+<p><strong>Code-First / rspec-openapi（本ガイド）</strong>：<strong>既存テストをそのまま使う。設定ほぼゼロ。最も手軽。</strong></p>
+</div>
+
+<h3>📋 こんな人に向いています</h3>
+<ul>
+<li>既存の Rails API にスペックを<strong>後付け</strong>したい</li>
+<li>RSwag の DSL を覚えるのが面倒</li>
+<li>とにかく手軽に始めたい</li>
+<li>既に RSpec のリクエストスペックが書いてある</li>
+</ul>
+
+<h3>⚠️ 注意点</h3>
+<p>rspec-openapi はテスト実行時のリクエスト・レスポンスから型を<strong>推測</strong>します。そのため、RSwag ほどスキーマの詳細制御はできません（description、example、operationId の自動生成には限界があります）。スペック生成後に手動で微調整が必要な場合もあります。</p>
+
+<div class="pager"><div></div><a class="pager-btn next" onclick="goPage(1)"><span class="dir">次のページ →</span><span class="title">rspec-openapi の特徴</span></a></div>
+</div></div>
+
+<!-- PAGE 1 -->
+<div class="page" data-page="1">
+<div class="page-header"><div class="step-label">Chapter 01</div><h2>rspec-openapi の特徴</h2><div class="desc">RSwag との違いと仕組みを理解する</div></div>
+<div class="content">
+<h3>仕組み</h3>
+<p>rspec-openapi は、RSpec のリクエストスペック実行時に <strong>実際のリクエストとレスポンスを傍受</strong>し、そこから OpenAPI スペックを自動生成します。つまり、「テストで実際に送ったデータ」と「実際に返ってきたデータ」からスキーマを推測するのです。</p>
+
+<div class="callout callout-concept">
+<div class="callout-label">🧠 たとえ話</div>
+<p><strong>RSwag</strong> は「注文書（DSL）に詳しく書いてもらって、その通りに伝票（スペック）を作る」アプローチ。</p>
+<p><strong>rspec-openapi</strong> は「実際の取引（テスト実行）を観察して、そこから伝票（スペック）を自動作成する」アプローチ。注文書を書く手間がゼロですが、観察から推測するので細かいニュアンスが失われることがあります。</p>
+</div>
+
+<h3>RSwag との比較</h3>
+<table class="info-table">
+<tr><th>観点</th><th>RSwag</th><th>rspec-openapi</th></tr>
+<tr><td><strong>テストの書き方</strong></td><td>専用 DSL（path, get, response, schema...）</td><td>普通の RSpec そのまま</td></tr>
+<tr><td><strong>学習コスト</strong></td><td>DSL を覚える必要あり</td><td>ほぼゼロ</td></tr>
+<tr><td><strong>既存テストの再利用</strong></td><td>書き直しが必要</td><td>そのまま使える</td></tr>
+<tr><td><strong>スキーマの精度</strong></td><td>◎ 手動で詳細に定義</td><td>△ レスポンスから推測</td></tr>
+<tr><td><strong>description / example</strong></td><td>DSL で自由に記述</td><td>テスト名から自動推測</td></tr>
+<tr><td><strong>Swagger UI</strong></td><td>内蔵</td><td>別途設置が必要</td></tr>
+<tr><td><strong>スペック生成コマンド</strong></td><td><code>rake rswag:specs:swaggerize</code></td><td><code>OPENAPI=1 rspec</code></td></tr>
+</table>
+
+<div class="callout callout-tip">
+<div class="callout-label">✅ 使い分けの指針</div>
+<p><strong>「既存テストが大量にある」</strong> → rspec-openapi（書き直し不要）<br>
+<strong>「新規プロジェクトで詳細なドキュメントが必要」</strong> → RSwag<br>
+<strong>「まず rspec-openapi で始めて、後から RSwag に移行」</strong> も有効な戦略です。</p>
+</div>
+
+<div class="pager">
+<a class="pager-btn" onclick="goPage(0)"><span class="dir">← 前のページ</span><span class="title">このガイドについて</span></a>
+<a class="pager-btn next" onclick="goPage(2)"><span class="dir">次のページ →</span><span class="title">プロジェクト構成</span></a>
+</div>
+</div></div>
+
+<!-- PAGE 2 -->
+<div class="page" data-page="2">
+<div class="page-header"><div class="step-label">Chapter 02</div><h2>プロジェクト構成</h2><div class="desc">rspec-openapi 版のディレクトリ構成</div></div>
+<div class="content">
+<div class="file-tree">
+<span class="folder">my-task-app/</span><br>
+│<br>
+├── <span class="folder">backend/</span><br>
+│&nbsp;&nbsp; ├── <span class="file">app/</span><br>
+│&nbsp;&nbsp; │&nbsp;&nbsp; ├── <span class="file">controllers/</span> <span class="comment">← まずここを書く</span><br>
+│&nbsp;&nbsp; │&nbsp;&nbsp; └── <span class="file">models/</span><br>
+│&nbsp;&nbsp; ├── <span class="file">spec/</span><br>
+│&nbsp;&nbsp; │&nbsp;&nbsp; ├── <span class="highlight">requests/</span> <span class="comment">← ★ 普通の RSpec テスト（DSL なし！）</span><br>
+│&nbsp;&nbsp; │&nbsp;&nbsp; └── <span class="file">openapi_helper.rb</span> <span class="comment">← 設定ファイル</span><br>
+│&nbsp;&nbsp; ├── <span class="highlight">doc/openapi.yaml</span> <span class="comment">← ★ OPENAPI=1 rspec で自動生成</span><br>
+│&nbsp;&nbsp; └── <span class="file">Gemfile</span><br>
+│<br>
+├── <span class="folder">frontend/</span><br>
+│&nbsp;&nbsp; ├── <span class="file">src/api/</span><br>
+│&nbsp;&nbsp; │&nbsp;&nbsp; ├── <span class="highlight">schema.d.ts</span> <span class="comment">← 自動生成される型定義</span><br>
+│&nbsp;&nbsp; │&nbsp;&nbsp; ├── <span class="file">client.ts</span><br>
+│&nbsp;&nbsp; │&nbsp;&nbsp; └── <span class="file">hooks.ts</span><br>
+│&nbsp;&nbsp; └── <span class="file">package.json</span><br>
+│<br>
+└── <span class="file">.github/workflows/</span>
+</div>
+
+<div class="callout callout-concept">
+<div class="callout-label">🧠 他のアプローチとの違い</div>
+<p><strong>Design-First</strong>：<code>docs/openapi.yaml</code>（手書き）<br>
+<strong>RSwag</strong>：<code>backend/swagger/v1/swagger.yaml</code>（RSwag が生成）<br>
+<strong>rspec-openapi</strong>：<code>backend/doc/openapi.yaml</code>（rspec-openapi が生成）</p>
+<p>出力先が違うだけで、生成されるファイルの中身（OpenAPI 3.0 YAML）は同じフォーマットです。</p>
+</div>
+
+<div class="pager">
+<a class="pager-btn" onclick="goPage(1)"><span class="dir">← 前のページ</span><span class="title">rspec-openapi の特徴</span></a>
+<a class="pager-btn next" onclick="goPage(3)"><span class="dir">次のページ →</span><span class="title">Rails APIの初期設定</span></a>
+</div>
+</div></div>
+
+<!-- PAGE 3 -->
+<div class="page" data-page="3">
+<div class="page-header"><div class="step-label">Chapter 03</div><h2>Rails API の初期設定</h2><div class="desc">gem のインストールが RSwag 版より少ない</div></div>
+<div class="content">
+<h3>プロジェクト作成</h3>
+<div class="code-block"><div class="code-header"><span class="lang-dot lang-bash"></span> Terminal</div>
+<pre><code>mkdir my-task-app && <span class="kw">cd</span> my-task-app
+rails new backend --api --database=sqlite3 --skip-test
+<span class="kw">cd</span> backend</code></pre></div>
+
+<h3>gem のインストール</h3>
+<p>RSwag 版と比べて、<strong>インストールする gem が少ない</strong>のが特徴です。</p>
+<div class="code-block"><div class="code-header"><span class="lang-dot lang-bash"></span> Terminal</div>
+<pre><code><span class="cm"># rspec-openapi: テスト実行からスペックを自動生成</span>
+bundle add rspec-rails --group <span class="str">"development,test"</span>
+bundle add rspec-openapi --group <span class="str">"test"</span>
+
+<span class="cm"># Committee: 生成されたスペックでリクエスト/レスポンスを検証</span>
+bundle add committee
+
+<span class="cm"># CORS: React からのアクセスを許可</span>
+bundle add rack-cors
+
+<span class="cm"># RSpec のセットアップ</span>
+rails generate rspec:install</code></pre></div>
+
+<table class="info-table">
+<tr><th>gem</th><th>役割</th></tr>
+<tr><td><code>rspec-openapi</code></td><td>★ テスト実行時にリクエスト/レスポンスを傍受してスペック生成</td></tr>
+<tr><td><code>rspec-rails</code></td><td>RSpec を Rails で使うための基盤</td></tr>
+<tr><td><code>committee</code></td><td>生成スペックでリクエスト/レスポンスを検証</td></tr>
+<tr><td><code>rack-cors</code></td><td>フロントからのアクセス許可</td></tr>
+</table>
+
+<div class="callout callout-tip">
+<div class="callout-label">✅ RSwag 版との違い</div>
+<p>RSwag 版では <code>rswag-api</code>、<code>rswag-ui</code>、<code>rswag-specs</code> の3つが必要でしたが、rspec-openapi では <strong><code>rspec-openapi</code> 1つだけ</strong>です。Swagger UI は別途設置します（Chapter 10 で解説）。</p>
+</div>
+
+<div class="callout callout-warn">
+<div class="callout-label">⚠️ Windows / ローカル環境で PostgreSQL が未起動の場合</div>
+<p>PostgreSQL サーバーが起動していない環境では <code>rails db:create</code> が失敗します。開発・学習用途では <strong>SQLite3</strong> が手軽です。<code>--database=sqlite3</code> でプロジェクトを作成し、<code>Gemfile</code> の <code>pg</code> を <code>sqlite3</code> に置き換えてください。</p>
+<div class="code-block" style="margin-top:12px"><div class="code-header"><span class="lang-dot lang-ruby"></span> Gemfile（SQLite3 版）</div>
+<pre><code><span class="cm"># gem "pg", "~> 1.1"  ← 削除</span>
+gem <span class="str">"sqlite3"</span>, <span class="str">">= 2.1"</span>  <span class="cm"># ← 追加</span></code></pre></div>
+<div class="code-block"><div class="code-header"><span class="lang-dot lang-yaml"></span> config/database.yml（SQLite3 版）</div>
+<pre><code><span class="kw">default</span>: &amp;<span class="kw">default</span>
+  <span class="kw">adapter</span>: <span class="str">sqlite3</span>
+  <span class="kw">pool</span>: &lt;%= ENV.fetch(<span class="str">"RAILS_MAX_THREADS"</span>) { <span class="num">5</span> } %&gt;
+  <span class="kw">timeout</span>: <span class="num">5000</span>
+
+<span class="kw">development</span>:
+  &lt;&lt;: *<span class="kw">default</span>
+  <span class="kw">database</span>: <span class="str">db/development.sqlite3</span>
+
+<span class="kw">test</span>:
+  &lt;&lt;: *<span class="kw">default</span>
+  <span class="kw">database</span>: <span class="str">db/test.sqlite3</span></code></pre></div>
+</div>
+
+<h3>CORS の設定</h3>
+<div class="code-block"><div class="code-header"><span class="lang-dot lang-ruby"></span> config/initializers/cors.rb</div>
+<pre><code><span class="type">Rails</span>.application.config.middleware.insert_before <span class="num">0</span>, <span class="type">Rack::Cors</span> <span class="kw">do</span>
+  allow <span class="kw">do</span>
+    origins <span class="str">"http://localhost:5173"</span>
+    resource <span class="str">"*"</span>, headers: <span class="sym">:any</span>,
+      methods: [<span class="sym">:get</span>, <span class="sym">:post</span>, <span class="sym">:put</span>, <span class="sym">:patch</span>, <span class="sym">:delete</span>, <span class="sym">:options</span>, <span class="sym">:head</span>]
+  <span class="kw">end</span>
+<span class="kw">end</span></code></pre></div>
+
+<div class="pager">
+<a class="pager-btn" onclick="goPage(2)"><span class="dir">← 前のページ</span><span class="title">プロジェクト構成</span></a>
+<a class="pager-btn next" onclick="goPage(4)"><span class="dir">次のページ →</span><span class="title">Reactプロジェクトの作成</span></a>
+</div>
+</div></div>
+
+<!-- PAGE 4 -->
+<div class="page" data-page="4">
+<div class="page-header"><div class="step-label">Chapter 04</div><h2>React プロジェクトの作成</h2><div class="desc">フロント側は他のアプローチと完全に同じ</div></div>
+<div class="content">
+<div class="code-block"><div class="code-header"><span class="lang-dot lang-bash"></span> Terminal（my-task-app/ で実行）</div>
+<pre><code>npm create vite@latest frontend -- --template react-ts
+<span class="kw">cd</span> frontend && npm install
+npm install openapi-fetch openapi-react-query @tanstack/react-query
+npm install -D openapi-typescript</code></pre></div>
+
+<div class="code-block"><div class="code-header"><span class="lang-dot lang-json"></span> frontend/package.json（scripts）</div>
+<pre><code>{
+  <span class="str">"scripts"</span>: {
+    <span class="str">"dev"</span>: <span class="str">"vite"</span>,
+    <span class="str">"build"</span>: <span class="str">"tsc --noEmit && vite build"</span>,
+    <span class="str">"generate:api"</span>: <span class="str">"openapi-typescript ../backend/doc/openapi.yaml -o src/api/schema.d.ts"</span>,
+    <span class="str">"typecheck"</span>: <span class="str">"tsc --noEmit"</span>
+  }
+}</code></pre></div>
+
+<div class="callout callout-warn">
+<div class="callout-label">⚠️ パスの違い</div>
+<p>rspec-openapi のデフォルト出力先は <code>doc/openapi.yaml</code> です。<br>
+Design-First：<code>../docs/openapi.yaml</code><br>
+RSwag：<code>../backend/swagger/v1/swagger.yaml</code><br>
+rspec-openapi：<code>../backend/doc/openapi.yaml</code></p>
+</div>
+
+<div class="pager">
+<a class="pager-btn" onclick="goPage(3)"><span class="dir">← 前のページ</span><span class="title">Rails APIの初期設定</span></a>
+<a class="pager-btn next" onclick="goPage(5)"><span class="dir">次のページ →</span><span class="title">モデルとコントローラを実装</span></a>
+</div>
+</div></div>
+
+<!-- PAGE 5 -->
+<div class="page" data-page="5">
+<div class="page-header"><div class="step-label">Chapter 05</div><h2>モデルとコントローラを実装</h2><div class="desc">まず動く API を作る ─ 全 CRUD アクションを実装</div></div>
+<div class="content">
+<h3>モデルの生成とマイグレーション</h3>
+<div class="code-block"><div class="code-header"><span class="lang-dot lang-bash"></span> Terminal</div>
+<pre><code>rails g model Task title:string description:text status:string
+rails db:create db:migrate
+
+<span class="cm"># テスト用 DB にも適用（テスト実行前に必要）</span>
+RAILS_ENV=test rails db:migrate</code></pre></div>
+
+<div class="code-block"><div class="code-header"><span class="lang-dot lang-ruby"></span> app/models/task.rb</div>
+<pre><code><span class="kw">class</span> <span class="type">Task</span> < <span class="type">ApplicationRecord</span>
+  validates <span class="sym">:title</span>, presence: <span class="num">true</span>, length: { maximum: <span class="num">255</span> }
+  validates <span class="sym">:status</span>, inclusion: { in: %w[pending in_progress completed] }, allow_nil: <span class="num">true</span>
+
+  after_initialize { self.status ||= <span class="str">"pending"</span> }
+
+  scope <span class="sym">:filter_by_status</span>, ->(status) { where(status: status) <span class="kw">if</span> status.present? }
+<span class="kw">end</span></code></pre></div>
+
+<h3>ルーティング</h3>
+<div class="code-block"><div class="code-header"><span class="lang-dot lang-ruby"></span> config/routes.rb</div>
+<pre><code><span class="type">Rails</span>.application.routes.draw <span class="kw">do</span>
+  get <span class="str">"up"</span> => <span class="str">"rails/health#show"</span>, as: <span class="sym">:rails_health_check</span>
+
+  namespace <span class="sym">:api</span> <span class="kw">do</span>
+    namespace <span class="sym">:v1</span> <span class="kw">do</span>
+      resources <span class="sym">:tasks</span>
+    <span class="kw">end</span>
+  <span class="kw">end</span>
+<span class="kw">end</span></code></pre></div>
+
+<h3>コントローラ（全 CRUD）</h3>
+<div class="code-block"><div class="code-header"><span class="lang-dot lang-ruby"></span> app/controllers/api/v1/tasks_controller.rb</div>
+<pre><code><span class="kw">module</span> <span class="type">Api</span>
+  <span class="kw">module</span> <span class="type">V1</span>
+    <span class="kw">class</span> <span class="type">TasksController</span> < <span class="type">ApplicationController</span>
+      before_action <span class="sym">:set_task</span>, only: %i[show update destroy]
+
+      <span class="kw">def</span> <span class="fn">index</span>
+        tasks = <span class="type">Task</span>.filter_by_status(params[<span class="sym">:status</span>]).order(created_at: <span class="sym">:desc</span>)
+        render json: tasks
+      <span class="kw">end</span>
+
+      <span class="kw">def</span> <span class="fn">show</span>
+        render json: @task
+      <span class="kw">end</span>
+
+      <span class="kw">def</span> <span class="fn">create</span>
+        task = <span class="type">Task</span>.new(task_params)
+        <span class="kw">if</span> task.save
+          render json: task, status: <span class="sym">:created</span>
+        <span class="kw">else</span>
+          render json: { errors: task.errors.full_messages }, status: <span class="sym">:unprocessable_entity</span>
+        <span class="kw">end</span>
+      <span class="kw">end</span>
+
+      <span class="kw">def</span> <span class="fn">update</span>
+        <span class="kw">if</span> @task.update(task_params)
+          render json: @task
+        <span class="kw">else</span>
+          render json: { errors: @task.errors.full_messages }, status: <span class="sym">:unprocessable_entity</span>
+        <span class="kw">end</span>
+      <span class="kw">end</span>
+
+      <span class="kw">def</span> <span class="fn">destroy</span>
+        @task.destroy
+        head <span class="sym">:no_content</span>
+      <span class="kw">end</span>
+
+      <span class="kw">private</span>
+
+      <span class="kw">def</span> <span class="fn">set_task</span>
+        @task = <span class="type">Task</span>.find(params[<span class="sym">:id</span>])
+      <span class="kw">rescue</span> <span class="type">ActiveRecord::RecordNotFound</span>
+        render json: { error: <span class="str">"Task not found"</span> }, status: <span class="sym">:not_found</span>
+      <span class="kw">end</span>
+
+      <span class="kw">def</span> <span class="fn">task_params</span>
+        params.require(<span class="sym">:task</span>).permit(<span class="sym">:title</span>, <span class="sym">:description</span>, <span class="sym">:status</span>)
+      <span class="kw">end</span>
+    <span class="kw">end</span>
+  <span class="kw">end</span>
+<span class="kw">end</span></code></pre></div>
+
+<div class="callout callout-info">
+<div class="callout-label">📌 ポイント</div>
+<p><code>filter_by_status</code> スコープを使って <code>?status=pending</code> のようなクエリパラメータでフィルタリングできます。<code>task_params</code> で Strong Parameters を使い、<code>:task</code> キーのネストを必須にしています（テストでも <code>{ task: { title: "..." } }</code> の形で送信します）。</p>
+</div>
+
+<div class="pager">
+<a class="pager-btn" onclick="goPage(4)"><span class="dir">← 前のページ</span><span class="title">Reactプロジェクトの作成</span></a>
+<a class="pager-btn next" onclick="goPage(6)"><span class="dir">次のページ →</span><span class="title">普通のRSpecテストを書く</span></a>
+</div>
+</div></div>
+
+<!-- PAGE 6: 普通のテスト -->
+<div class="page" data-page="6">
+<div class="page-header"><div class="step-label">Chapter 06</div><h2>普通の RSpec テストを書く</h2><div class="desc">★ 特別な DSL は一切不要。いつものテストをそのまま</div></div>
+<div class="content">
+
+<div class="callout callout-concept">
+<div class="callout-label">🧠 これが rspec-openapi 最大の特徴</div>
+<p>RSwag では <code>path "/api/v1/tasks" do</code>、<code>get "説明" do</code>、<code>schema type: :array</code> のような<strong>専用 DSL</strong> が必要でした。rspec-openapi では、<strong>普通の RSpec リクエストスペックをそのまま書くだけ</strong>です。特別なメソッドは何も使いません。</p>
+</div>
+
+<h3>最もシンプルなテスト例</h3>
+<div class="code-block"><div class="code-header"><span class="lang-dot lang-ruby"></span> spec/requests/api/v1/tasks_spec.rb（抜粋）</div>
+<pre><code><span class="kw">require</span> <span class="str">"rails_helper"</span>  <span class="cm"># ← openapi_helper ではない！普通の rails_helper</span>
+
+<span class="type">RSpec</span>.describe <span class="str">"Tasks API"</span>, type: <span class="sym">:request</span> <span class="kw">do</span>
+
+  describe <span class="str">"GET /api/v1/tasks"</span> <span class="kw">do</span>
+    it <span class="str">"returns a list of tasks"</span> <span class="kw">do</span>
+      <span class="cm"># ── テストデータ ──</span>
+      <span class="type">Task</span>.create!(title: <span class="str">"タスク1"</span>, status: <span class="str">"pending"</span>)
+      <span class="type">Task</span>.create!(title: <span class="str">"タスク2"</span>, status: <span class="str">"completed"</span>)
+
+      <span class="cm"># ── リクエスト ──</span>
+      get <span class="str">"/api/v1/tasks"</span>
+
+      <span class="cm"># ── アサーション ──</span>
+      expect(response).to have_http_status(<span class="num">200</span>)
+      json = <span class="type">JSON</span>.parse(response.body)
+      expect(json.length).to eq(<span class="num">2</span>)
+    <span class="kw">end</span>
+  <span class="kw">end</span>
+<span class="kw">end</span></code></pre></div>
+
+<p>これだけです。RSwag のような <code>path</code>、<code>tags</code>、<code>produces</code>、<code>schema</code>、<code>run_test!</code> は<strong>一切ありません</strong>。</p>
+
+<h3>何が起きるのか？</h3>
+<p><code>OPENAPI=1</code> をつけてテストを実行すると、rspec-openapi が裏で以下を行います。</p>
+<ol>
+<li>テスト中の <code>get "/api/v1/tasks"</code> を傍受して、パス・メソッドを記録</li>
+<li>実際のレスポンスボディを解析して、スキーマ（型）を推測</li>
+<li>テスト名（<code>"returns a list of tasks"</code>）を description として使用</li>
+<li>全テスト終了後に、これらの情報を <code>doc/openapi.yaml</code> に出力</li>
+</ol>
+
+<div class="callout callout-tip">
+<div class="callout-label">✅ テストの書き方のコツ</div>
+<p>rspec-openapi はテスト実行時のレスポンスからスキーマを推測するので、<strong>テストデータがスキーマの品質を左右</strong>します。</p>
+<p>全フィールドが埋まったデータを使うと、より正確なスキーマが生成されます。たとえば <code>description: nil</code> のデータしかないと、description が <code>nullable</code> として推測されます。</p>
+</div>
+
+<div class="pager">
+<a class="pager-btn" onclick="goPage(5)"><span class="dir">← 前のページ</span><span class="title">モデルとコントローラを実装</span></a>
+<a class="pager-btn next" onclick="goPage(7)"><span class="dir">次のページ →</span><span class="title">全CRUDのテスト</span></a>
+</div>
+</div></div>
+
+<!-- PAGE 7: 全CRUD -->
+<div class="page" data-page="7">
+<div class="page-header"><div class="step-label">Chapter 07</div><h2>全 CRUD のテスト</h2><div class="desc">全エンドポイントを網羅するテストを書く</div></div>
+<div class="content">
+<div class="callout callout-warn">
+<div class="callout-label">⚠️ Strong Parameters のネストに注意</div>
+<p>コントローラで <code>params.require(:task).permit(...)</code> としているため、POST/PATCH リクエストのボディは <code>{ "task": { "title": "..." } }</code> のように <strong><code>task</code> キーでネスト</strong>して送る必要があります。テストでも同様に <code>{ task: { ... } }.to_json</code> の形で送信します。</p>
+</div>
+
+<div class="code-block"><div class="code-header"><span class="lang-dot lang-ruby"></span> spec/requests/api/v1/tasks_spec.rb（完全版）</div>
+<pre><code><span class="kw">require</span> <span class="str">"rails_helper"</span>
+
+<span class="type">RSpec</span>.describe <span class="str">"Tasks API"</span>, type: <span class="sym">:request</span> <span class="kw">do</span>
+  <span class="kw">let</span>(<span class="sym">:json</span>) { <span class="type">JSON</span>.parse(response.body) }
+
+  <span class="cm"># ── 一覧取得 ──</span>
+  describe <span class="str">"GET /api/v1/tasks"</span> <span class="kw">do</span>
+    it <span class="str">"returns all tasks"</span> <span class="kw">do</span>
+      <span class="type">Task</span>.create!(title: <span class="str">"タスク1"</span>, description: <span class="str">"詳細1"</span>, status: <span class="str">"pending"</span>)
+      <span class="type">Task</span>.create!(title: <span class="str">"タスク2"</span>, description: <span class="str">"詳細2"</span>, status: <span class="str">"completed"</span>)
+
+      get <span class="str">"/api/v1/tasks"</span>
+
+      expect(response).to have_http_status(<span class="num">200</span>)
+      expect(json.length).to eq(<span class="num">2</span>)
+      expect(json[<span class="num">0</span>]).to have_key(<span class="str">"id"</span>)
+      expect(json[<span class="num">0</span>]).to have_key(<span class="str">"title"</span>)
+      expect(json[<span class="num">0</span>]).to have_key(<span class="str">"status"</span>)
+      expect(json[<span class="num">0</span>]).to have_key(<span class="str">"created_at"</span>)
+    <span class="kw">end</span>
+
+    it <span class="str">"filters by status"</span> <span class="kw">do</span>
+      <span class="type">Task</span>.create!(title: <span class="str">"やること"</span>, status: <span class="str">"pending"</span>)
+      <span class="type">Task</span>.create!(title: <span class="str">"終わった"</span>, status: <span class="str">"completed"</span>)
+
+      get <span class="str">"/api/v1/tasks"</span>, params: { status: <span class="str">"pending"</span> }
+
+      expect(response).to have_http_status(<span class="num">200</span>)
+      expect(json.length).to eq(<span class="num">1</span>)
+      expect(json[<span class="num">0</span>][<span class="str">"status"</span>]).to eq(<span class="str">"pending"</span>)
+    <span class="kw">end</span>
+
+    it <span class="str">"returns empty array when no tasks exist"</span> <span class="kw">do</span>
+      get <span class="str">"/api/v1/tasks"</span>
+      expect(response).to have_http_status(<span class="num">200</span>)
+      expect(json).to eq([])
+    <span class="kw">end</span>
+  <span class="kw">end</span>
+
+  <span class="cm"># ── 詳細取得 ──</span>
+  describe <span class="str">"GET /api/v1/tasks/:id"</span> <span class="kw">do</span>
+    it <span class="str">"returns a task"</span> <span class="kw">do</span>
+      task = <span class="type">Task</span>.create!(title: <span class="str">"テスト"</span>, description: <span class="str">"メモ"</span>, status: <span class="str">"in_progress"</span>)
+      get <span class="str">"/api/v1/tasks/#{task.id}"</span>
+
+      expect(response).to have_http_status(<span class="num">200</span>)
+      expect(json[<span class="str">"id"</span>]).to eq(task.id)
+      expect(json[<span class="str">"status"</span>]).to eq(<span class="str">"in_progress"</span>)
+    <span class="kw">end</span>
+
+    it <span class="str">"returns 404 for not found"</span> <span class="kw">do</span>
+      get <span class="str">"/api/v1/tasks/999999"</span>
+      expect(response).to have_http_status(<span class="num">404</span>)
+      expect(json).to have_key(<span class="str">"error"</span>)
+    <span class="kw">end</span>
+  <span class="kw">end</span>
+
+  <span class="cm"># ── 作成 ──</span>
+  describe <span class="str">"POST /api/v1/tasks"</span> <span class="kw">do</span>
+    it <span class="str">"creates a task"</span> <span class="kw">do</span>
+      <span class="cm"># ★ task: キーでネストして送る</span>
+      post <span class="str">"/api/v1/tasks"</span>,
+        params: { task: { title: <span class="str">"新しいタスク"</span>, description: <span class="str">"メモ"</span> } }.to_json,
+        headers: { <span class="str">"Content-Type"</span> => <span class="str">"application/json"</span> }
+
+      expect(response).to have_http_status(<span class="num">201</span>)
+      expect(json[<span class="str">"title"</span>]).to eq(<span class="str">"新しいタスク"</span>)
+      expect(json[<span class="str">"status"</span>]).to eq(<span class="str">"pending"</span>)
+    <span class="kw">end</span>
+
+    it <span class="str">"creates a task with status"</span> <span class="kw">do</span>
+      post <span class="str">"/api/v1/tasks"</span>,
+        params: { task: { title: <span class="str">"進行中タスク"</span>, status: <span class="str">"in_progress"</span> } }.to_json,
+        headers: { <span class="str">"Content-Type"</span> => <span class="str">"application/json"</span> }
+
+      expect(response).to have_http_status(<span class="num">201</span>)
+      expect(json[<span class="str">"status"</span>]).to eq(<span class="str">"in_progress"</span>)
+    <span class="kw">end</span>
+
+    it <span class="str">"returns 422 for missing title"</span> <span class="kw">do</span>
+      post <span class="str">"/api/v1/tasks"</span>,
+        params: { task: { title: <span class="str">""</span> } }.to_json,
+        headers: { <span class="str">"Content-Type"</span> => <span class="str">"application/json"</span> }
+
+      expect(response).to have_http_status(<span class="num">422</span>)
+      expect(json).to have_key(<span class="str">"errors"</span>)
+    <span class="kw">end</span>
+
+    it <span class="str">"returns 422 for invalid status"</span> <span class="kw">do</span>
+      post <span class="str">"/api/v1/tasks"</span>,
+        params: { task: { title: <span class="str">"タスク"</span>, status: <span class="str">"invalid"</span> } }.to_json,
+        headers: { <span class="str">"Content-Type"</span> => <span class="str">"application/json"</span> }
+
+      expect(response).to have_http_status(<span class="num">422</span>)
+      expect(json).to have_key(<span class="str">"errors"</span>)
+    <span class="kw">end</span>
+  <span class="kw">end</span>
+
+  <span class="cm"># ── 更新 ──</span>
+  describe <span class="str">"PATCH /api/v1/tasks/:id"</span> <span class="kw">do</span>
+    it <span class="str">"updates a task"</span> <span class="kw">do</span>
+      task = <span class="type">Task</span>.create!(title: <span class="str">"元のタイトル"</span>, status: <span class="str">"pending"</span>)
+      patch <span class="str">"/api/v1/tasks/#{task.id}"</span>,
+        params: { task: { title: <span class="str">"更新後"</span>, status: <span class="str">"in_progress"</span> } }.to_json,
+        headers: { <span class="str">"Content-Type"</span> => <span class="str">"application/json"</span> }
+
+      expect(response).to have_http_status(<span class="num">200</span>)
+      expect(json[<span class="str">"title"</span>]).to eq(<span class="str">"更新後"</span>)
+      expect(json[<span class="str">"status"</span>]).to eq(<span class="str">"in_progress"</span>)
+    <span class="kw">end</span>
+
+    it <span class="str">"returns 422 for invalid update"</span> <span class="kw">do</span>
+      task = <span class="type">Task</span>.create!(title: <span class="str">"タスク"</span>)
+      patch <span class="str">"/api/v1/tasks/#{task.id}"</span>,
+        params: { task: { title: <span class="str">""</span> } }.to_json,
+        headers: { <span class="str">"Content-Type"</span> => <span class="str">"application/json"</span> }
+
+      expect(response).to have_http_status(<span class="num">422</span>)
+      expect(json).to have_key(<span class="str">"errors"</span>)
+    <span class="kw">end</span>
+
+    it <span class="str">"returns 404 for not found"</span> <span class="kw">do</span>
+      patch <span class="str">"/api/v1/tasks/999999"</span>,
+        params: { task: { title: <span class="str">"更新"</span> } }.to_json,
+        headers: { <span class="str">"Content-Type"</span> => <span class="str">"application/json"</span> }
+
+      expect(response).to have_http_status(<span class="num">404</span>)
+    <span class="kw">end</span>
+  <span class="kw">end</span>
+
+  <span class="cm"># ── 削除 ──</span>
+  describe <span class="str">"DELETE /api/v1/tasks/:id"</span> <span class="kw">do</span>
+    it <span class="str">"deletes a task"</span> <span class="kw">do</span>
+      task = <span class="type">Task</span>.create!(title: <span class="str">"削除対象"</span>)
+      delete <span class="str">"/api/v1/tasks/#{task.id}"</span>
+
+      expect(response).to have_http_status(<span class="num">204</span>)
+      expect(<span class="type">Task</span>.find_by(id: task.id)).to be_nil
+    <span class="kw">end</span>
+
+    it <span class="str">"returns 404 for not found"</span> <span class="kw">do</span>
+      delete <span class="str">"/api/v1/tasks/999999"</span>
+      expect(response).to have_http_status(<span class="num">404</span>)
+    <span class="kw">end</span>
+  <span class="kw">end</span>
+<span class="kw">end</span></code></pre></div>
+
+<div class="callout callout-concept">
+<div class="callout-label">🧠 RSwag との比較</div>
+<p>上のコードに OpenAPI 固有のメソッドは<strong>一つもありません</strong>。<code>tags</code>、<code>schema</code>、<code>operationId</code>、<code>run_test!</code> のどれも使っていません。100% 純粋な RSpec です。</p>
+<p>これが rspec-openapi の最大の利点です。<strong>既存のテストをそのまま使える</strong>ので、移行コストがほぼゼロです。</p>
+</div>
+
+<div class="pager">
+<a class="pager-btn" onclick="goPage(6)"><span class="dir">← 前のページ</span><span class="title">普通のRSpecテストを書く</span></a>
+<a class="pager-btn next" onclick="goPage(8)"><span class="dir">次のページ →</span><span class="title">rspec-openapi の設定</span></a>
+</div>
+</div></div>
+
+<!-- PAGE 8: 設定 -->
+<div class="page" data-page="8">
+<div class="page-header"><div class="step-label">Chapter 08</div><h2>rspec-openapi の設定</h2><div class="desc">生成されるスペックをカスタマイズする</div></div>
+<div class="content">
+<h3>設定ファイルの作成</h3>
+<p>デフォルトでも動きますが、設定を追加すると生成されるスペックの品質が上がります。</p>
+
+<div class="callout callout-warn">
+<div class="callout-label">⚠️ バージョンによる設定名の違い</div>
+<p>古い記事や生成AIの回答では <code>tag_builder=</code>・<code>target_request_metadata=</code> と書かれている場合がありますが、<strong>rspec-openapi 0.27.x では存在しないメソッド</strong>です。実際のメソッド名は下表の通りです。</p>
+</div>
+
+<div class="code-block"><div class="code-header"><span class="lang-dot lang-ruby"></span> spec/openapi_helper.rb（新規作成）</div>
+<pre><code><span class="kw">require</span> <span class="str">"rspec/openapi"</span>
+
+<span class="cm"># ── 出力先のパス ──</span>
+<span class="type">RSpec::OpenAPI</span>.path = <span class="str">"doc/openapi.yaml"</span>
+
+<span class="cm"># ── API のメタ情報 ──</span>
+<span class="type">RSpec::OpenAPI</span>.title = <span class="str">"Task Manager API"</span>
+<span class="type">RSpec::OpenAPI</span>.info = {
+  version: <span class="str">"1.0.0"</span>,
+  description: <span class="str">"タスク管理アプリケーションの API"</span>
+}
+<span class="type">RSpec::OpenAPI</span>.servers = [
+  { url: <span class="str">"http://localhost:3000"</span>, description: <span class="str">"開発環境"</span> }
+]
+
+<span class="cm"># ── 対象を request spec のみに限定（正しい設定名: example_types）──</span>
+<span class="type">RSpec::OpenAPI</span>.example_types = [:request]
+
+<span class="cm"># ── タグをパス末尾から生成（正しい設定名: tags_builder）──</span>
+<span class="cm"># /api/v1/tasks → ["Tasks"] になる</span>
+<span class="type">RSpec::OpenAPI</span>.tags_builder = ->(example) {
+  path = example.metadata[<span class="sym">:request_path</span>] || <span class="str">""</span>
+  [path.split(<span class="str">"/"</span>).reject(&:<span class="sym">:empty?</span>).last&.capitalize].compact
+}</code></pre></div>
+
+<div class="code-block"><div class="code-header"><span class="lang-dot lang-ruby"></span> spec/spec_helper.rb に追記</div>
+<pre><code><span class="cm"># spec_helper.rb の先頭に追加</span>
+<span class="kw">require_relative</span> <span class="str">"openapi_helper"</span> <span class="kw">if</span> <span class="type">ENV</span>[<span class="str">"OPENAPI"</span>]</code></pre></div>
+
+<h3>主な設定項目（rspec-openapi 0.27.x）</h3>
+<table class="info-table">
+<tr><th>設定</th><th>デフォルト</th><th>説明</th></tr>
+<tr><td><code>RSpec::OpenAPI.path</code></td><td><code>"doc/openapi.yaml"</code></td><td>スペックの出力先</td></tr>
+<tr><td><code>RSpec::OpenAPI.title</code></td><td><code>"OpenAPI"</code></td><td>API のタイトル</td></tr>
+<tr><td><code>RSpec::OpenAPI.info</code></td><td><code>{}</code></td><td>version / description などのメタ情報</td></tr>
+<tr><td><code>RSpec::OpenAPI.servers</code></td><td><code>[]</code></td><td>サーバーの URL 一覧</td></tr>
+<tr><td><code>RSpec::OpenAPI.example_types</code></td><td><code>[:request]</code></td><td>対象 spec タイプ（旧: target_request_metadata）</td></tr>
+<tr><td><code>RSpec::OpenAPI.tags_builder</code></td><td>コントローラ名</td><td>タグ生成ロジック（旧: tag_builder）</td></tr>
+<tr><td><code>RSpec::OpenAPI.request_headers</code></td><td><code>[]</code></td><td>記録するリクエストヘッダー</td></tr>
+<tr><td><code>RSpec::OpenAPI.response_headers</code></td><td><code>[]</code></td><td>記録するレスポンスヘッダー</td></tr>
+</table>
+
+<div class="callout callout-tip">
+<div class="callout-label">✅ テスト名が description になる</div>
+<p><code>it "returns a list of tasks"</code> のテスト名が、生成されるスペックの <code>summary</code> や <code>description</code> に自動的に使われます。テスト名を分かりやすく書くことが、良いドキュメントにつながります。</p>
+</div>
+
+<div class="pager">
+<a class="pager-btn" onclick="goPage(7)"><span class="dir">← 前のページ</span><span class="title">全CRUDのテスト</span></a>
+<a class="pager-btn next" onclick="goPage(9)"><span class="dir">次のページ →</span><span class="title">スペック自動生成と確認</span></a>
+</div>
+</div></div>
+
+<!-- PAGE 9: 生成 -->
+<div class="page" data-page="9">
+<div class="page-header"><div class="step-label">Chapter 09</div><h2>スペック自動生成と確認</h2><div class="desc">OPENAPI=1 をつけてテストを実行するだけ</div></div>
+<div class="content">
+<h3>生成コマンド</h3>
+<div class="code-block"><div class="code-header"><span class="lang-dot lang-bash"></span> Terminal</div>
+<pre><code><span class="cm"># ★ これだけ！環境変数 OPENAPI=1 をつけて rspec 実行</span>
+OPENAPI=1 bundle exec rspec
+
+<span class="cm"># → doc/openapi.yaml が自動生成される</span>
+cat doc/openapi.yaml</code></pre></div>
+
+<div class="callout callout-concept">
+<div class="callout-label">🧠 OPENAPI=1 の意味</div>
+<p>普段のテスト実行（<code>bundle exec rspec</code>）ではスペックは生成されません。<code>OPENAPI=1</code> をつけたときだけ生成モードになります。これにより、CI のテスト実行速度に影響を与えません。</p>
+</div>
+
+<h3>生成されたスペックの確認</h3>
+<p>rspec-openapi が生成するスペックは、テスト実行時のレスポンスから型を推測するため、<strong>完璧ではない場合があります</strong>。以下のポイントを確認してください。</p>
+
+<ul>
+<li><strong>nullable の検出</strong>：description が nil のテストデータがあれば <code>nullable: true</code> が推測される。全フィールドが埋まったデータだけだと検出されない</li>
+<li><strong>enum の検出</strong>：rspec-openapi は enum を自動検出しない。手動で追加する必要がある場合がある</li>
+<li><strong>required の推測</strong>：レスポンスに常に含まれるフィールドは required と推測される</li>
+</ul>
+
+<div class="callout callout-warn">
+<div class="callout-label">⚠️ 必要に応じて手動調整</div>
+<p>生成された <code>doc/openapi.yaml</code> は手動で微調整できます。ただし、次回 <code>OPENAPI=1 rspec</code> を実行すると<strong>マージ</strong>されます（完全な上書きではなく、既存の内容に追記・更新されます）。手動で追加した <code>enum</code> や <code>description</code> は保持されます。</p>
+</div>
+
+<div class="pager">
+<a class="pager-btn" onclick="goPage(8)"><span class="dir">← 前のページ</span><span class="title">rspec-openapi の設定</span></a>
+<a class="pager-btn next" onclick="goPage(10)"><span class="dir">次のページ →</span><span class="title">Swagger UIの設置</span></a>
+</div>
+</div></div>
+
+<!-- PAGE 10: Swagger UI -->
+<div class="page" data-page="10">
+<div class="page-header"><div class="step-label">Chapter 10</div><h2>Swagger UI の設置</h2><div class="desc">RSwag なしで Swagger UI を使う方法</div></div>
+<div class="content">
+<h3>なぜ別途必要なのか</h3>
+<p>RSwag には Swagger UI が内蔵されていましたが、rspec-openapi には含まれていません。生成されたスペックをブラウザで閲覧するために、Swagger UI を別途設置します。</p>
+
+<h3>方法1：swagger-ui-dist を使う（おすすめ）</h3>
+<div class="code-block"><div class="code-header"><span class="lang-dot lang-bash"></span> Terminal</div>
+<pre><code><span class="cm"># swagger_ui_engine gem を追加</span>
+bundle add swagger_ui_engine</code></pre></div>
+
+<div class="code-block"><div class="code-header"><span class="lang-dot lang-ruby"></span> config/routes.rb に追加</div>
+<pre><code><span class="type">Rails</span>.application.routes.draw <span class="kw">do</span>
+  <span class="cm"># Swagger UI を /api-docs で公開</span>
+  mount <span class="type">SwaggerUiEngine::Engine</span>, at: <span class="str">"/api-docs"</span>
+
+  namespace <span class="sym">:api</span> <span class="kw">do</span>
+    namespace <span class="sym">:v1</span> <span class="kw">do</span>
+      resources <span class="sym">:tasks</span>
+    <span class="kw">end</span>
+  <span class="kw">end</span>
+<span class="kw">end</span></code></pre></div>
+
+<div class="code-block"><div class="code-header"><span class="lang-dot lang-ruby"></span> config/initializers/swagger_ui_engine.rb</div>
+<pre><code><span class="type">SwaggerUiEngine</span>.configure <span class="kw">do</span> |config|
+  config.swagger_url = {
+    <span class="str">"v1"</span> => <span class="str">"/doc/openapi.yaml"</span>
+  }
+<span class="kw">end</span></code></pre></div>
+
+<h3>方法2：スペックファイルを public に配置</h3>
+<p>もっと手軽な方法として、生成された YAML を <code>public/</code> に配置し、CDN の Swagger UI から読み込む方法もあります。</p>
+
+<div class="code-block"><div class="code-header"><span class="lang-dot lang-bash"></span> Terminal</div>
+<pre><code><span class="cm"># YAML を public に配置</span>
+cp doc/openapi.yaml public/openapi.yaml
+
+<span class="cm"># ブラウザで Swagger UI のオンライン版を開き、URL を入力</span>
+<span class="cm"># https://petstore.swagger.io/?url=http://localhost:3000/openapi.yaml</span></code></pre></div>
+
+<div class="pager">
+<a class="pager-btn" onclick="goPage(9)"><span class="dir">← 前のページ</span><span class="title">スペック自動生成と確認</span></a>
+<a class="pager-btn next" onclick="goPage(11)"><span class="dir">次のページ →</span><span class="title">Committeeで自動検証</span></a>
+</div>
+</div></div>
+
+<!-- PAGE 11: Committee -->
+<div class="page" data-page="11">
+<div class="page-header"><div class="step-label">Chapter 11</div><h2>Committee で自動検証</h2><div class="desc">生成されたスペックを使ったリクエスト/レスポンス検証</div></div>
+<div class="content">
+<div class="code-block"><div class="code-header"><span class="lang-dot lang-ruby"></span> config/application.rb</div>
+<pre><code><span class="cm"># ★ rspec-openapi が生成したスペックを参照</span>
+schema_path = <span class="type">Rails</span>.root.join(<span class="str">"doc"</span>, <span class="str">"openapi.yaml"</span>).to_s
+
+config.middleware.use <span class="type">Committee::Middleware::RequestValidation</span>,
+  schema_path: schema_path,
+  strict: <span class="num">true</span>,
+  error_class: <span class="type">Committee::ValidationError</span>
+
+<span class="kw">if</span> <span class="type">Rails</span>.env.development? || <span class="type">Rails</span>.env.test?
+  config.middleware.use <span class="type">Committee::Middleware::ResponseValidation</span>,
+    schema_path: schema_path,
+    raise: <span class="num">true</span>
+<span class="kw">end</span></code></pre></div>
+
+<p>パスが <code>doc/openapi.yaml</code> になっている以外は、他のアプローチと完全に同じです。</p>
+
+<div class="pager">
+<a class="pager-btn" onclick="goPage(10)"><span class="dir">← 前のページ</span><span class="title">Swagger UIの設置</span></a>
+<a class="pager-btn next" onclick="goPage(12)"><span class="dir">次のページ →</span><span class="title">TypeScript型の自動生成</span></a>
+</div>
+</div></div>
+
+<!-- PAGE 12-14: フロント（同じ） -->
+<div class="page" data-page="12">
+<div class="page-header"><div class="step-label">Chapter 12</div><h2>TypeScript 型の自動生成</h2><div class="desc">フロント側は他のアプローチと完全に同じ</div></div>
+<div class="content">
+<div class="code-block"><div class="code-header"><span class="lang-dot lang-bash"></span> Terminal（frontend/）</div>
+<pre><code>mkdir -p src/api
+npm run generate:api
+<span class="cm"># → src/api/schema.d.ts が生成される</span></code></pre></div>
+<p>生成された型を使って openapi-fetch でAPIを呼び出します。コードは RSwag 版と完全に同じです。</p>
+
+<div class="code-block"><div class="code-header"><span class="lang-dot lang-ts"></span> src/api/client.ts</div>
+<pre><code><span class="kw">import</span> createClient <span class="kw">from</span> <span class="str">"openapi-fetch"</span>;
+<span class="kw">import</span> <span class="kw">type</span> { paths } <span class="kw">from</span> <span class="str">"./schema"</span>;
+
+<span class="kw">export const</span> api = createClient&lt;paths&gt;({
+  baseUrl: <span class="str">"http://localhost:3000"</span>,
+});</code></pre></div>
+
+<div class="pager">
+<a class="pager-btn" onclick="goPage(11)"><span class="dir">← 前のページ</span><span class="title">Committeeで自動検証</span></a>
+<a class="pager-btn next" onclick="goPage(13)"><span class="dir">次のページ →</span><span class="title">openapi-fetchでAPI呼び出し</span></a>
+</div>
+</div></div>
+
+<div class="page" data-page="13">
+<div class="page-header"><div class="step-label">Chapter 13</div><h2>openapi-fetch で型安全に API を呼び出す</h2><div class="desc">パス・パラメータ・レスポンスが全て型推論される</div></div>
+<div class="content">
+<p>コードは RSwag 版と完全に同じです。</p>
+<div class="code-block"><div class="code-header"><span class="lang-dot lang-ts"></span> 使用例</div>
+<pre><code><span class="cm">// GET /api/v1/tasks</span>
+<span class="kw">const</span> { data } = <span class="kw">await</span> api.GET(<span class="str">"/api/v1/tasks"</span>, {
+  params: { query: { status: <span class="str">"pending"</span> } },
+});
+<span class="cm">// data の型: Task[] | undefined</span>
+
+<span class="cm">// POST /api/v1/tasks</span>
+<span class="kw">const</span> { data: newTask } = <span class="kw">await</span> api.POST(<span class="str">"/api/v1/tasks"</span>, {
+  body: { title: <span class="str">"新しいタスク"</span> },
+});</code></pre></div>
+
+<div class="code-block"><div class="code-header"><span class="lang-dot lang-ts"></span> src/api/hooks.ts（TanStack Query 統合）</div>
+<pre><code><span class="kw">import</span> createFetchClient <span class="kw">from</span> <span class="str">"openapi-fetch"</span>;
+<span class="kw">import</span> createClient <span class="kw">from</span> <span class="str">"openapi-react-query"</span>;
+<span class="kw">import</span> <span class="kw">type</span> { paths } <span class="kw">from</span> <span class="str">"./schema"</span>;
+
+<span class="kw">const</span> fetchClient = createFetchClient&lt;paths&gt;({ baseUrl: <span class="str">"http://localhost:3000"</span> });
+<span class="kw">export const</span> $api = createClient(fetchClient);</code></pre></div>
+
+<div class="pager">
+<a class="pager-btn" onclick="goPage(12)"><span class="dir">← 前のページ</span><span class="title">TypeScript型の自動生成</span></a>
+<a class="pager-btn next" onclick="goPage(14)"><span class="dir">次のページ →</span><span class="title">TanStack Queryと統合</span></a>
+</div>
+</div></div>
+
+<div class="page" data-page="14">
+<div class="page-header"><div class="step-label">Chapter 14</div><h2>TanStack Query と統合</h2><div class="desc">コンポーネントでの使い方</div></div>
+<div class="content">
+<div class="code-block"><div class="code-header"><span class="lang-dot lang-ts"></span> src/components/TaskList.tsx</div>
+<pre><code><span class="kw">import</span> { $api } <span class="kw">from</span> <span class="str">"../api/hooks"</span>;
+
+<span class="kw">export function</span> <span class="fn">TaskList</span>() {
+  <span class="kw">const</span> { data: tasks, isLoading } = $api.useQuery(
+    <span class="str">"get"</span>, <span class="str">"/api/v1/tasks"</span>,
+    { params: { query: { status: <span class="str">"pending"</span> } } }
+  );
+
+  <span class="kw">if</span> (isLoading) <span class="kw">return</span> &lt;p&gt;読み込み中...&lt;/p&gt;;
+
+  <span class="kw">return</span> (
+    &lt;ul&gt;
+      {tasks?.map((task) =&gt; (
+        &lt;li key={task.id}&gt;{task.title} ─ {task.status}&lt;/li&gt;
+      ))}
+    &lt;/ul&gt;
+  );
+}</code></pre></div>
+
+<p>main.tsx の QueryClientProvider 設定も他のアプローチと同じです。</p>
+
+<div class="pager">
+<a class="pager-btn" onclick="goPage(13)"><span class="dir">← 前のページ</span><span class="title">openapi-fetchでAPI呼び出し</span></a>
+<a class="pager-btn next" onclick="goPage(15)"><span class="dir">次のページ →</span><span class="title">CIで整合性チェック</span></a>
+</div>
+</div></div>
+
+<!-- PAGE 15: CI -->
+<div class="page" data-page="15">
+<div class="page-header"><div class="step-label">Chapter 15</div><h2>CI で整合性チェック</h2><div class="desc">OPENAPI=1 でスペック再生成 → 差分チェック</div></div>
+<div class="content">
+<div class="code-block"><div class="code-header"><span class="lang-dot lang-yaml"></span> .github/workflows/api-contract.yml</div>
+<pre><code><span class="kw">name</span>: <span class="str">API Contract Check</span>
+<span class="kw">on</span>: [<span class="str">push</span>, <span class="str">pull_request</span>]
+
+<span class="kw">jobs</span>:
+  <span class="fn">check</span>:
+    <span class="kw">runs-on</span>: <span class="str">ubuntu-latest</span>
+    <span class="kw">steps</span>:
+      - <span class="kw">uses</span>: <span class="str">actions/checkout@v4</span>
+
+      <span class="cm"># ── 1. Rails テスト ──</span>
+      - <span class="kw">name</span>: <span class="str">Run Rails tests</span>
+        <span class="kw">working-directory</span>: <span class="str">backend</span>
+        <span class="kw">run</span>: |
+          bundle install
+          bundle exec rspec
+
+      <span class="cm"># ── 2. ★ スペック再生成 → 差分チェック ──</span>
+      - <span class="kw">name</span>: <span class="str">Check spec is up to date</span>
+        <span class="kw">working-directory</span>: <span class="str">backend</span>
+        <span class="kw">run</span>: |
+          OPENAPI=1 bundle exec rspec
+          git diff --exit-code doc/openapi.yaml
+
+      <span class="cm"># ── 3. スペックのリント ──</span>
+      - <span class="kw">name</span>: <span class="str">Lint OpenAPI spec</span>
+        <span class="kw">run</span>: <span class="str">npx @redocly/cli lint backend/doc/openapi.yaml</span>
+
+      <span class="cm"># ── 4. フロント型チェック ──</span>
+      - <span class="kw">name</span>: <span class="str">Generate types and typecheck</span>
+        <span class="kw">working-directory</span>: <span class="str">frontend</span>
+        <span class="kw">run</span>: |
+          npm ci
+          npm run generate:api
+          npm run typecheck</code></pre></div>
+
+<div class="callout callout-concept">
+<div class="callout-label">🧠 RSwag 版との違い</div>
+<p>RSwag 版では <code>rake rswag:specs:swaggerize</code> でしたが、rspec-openapi 版では <code>OPENAPI=1 bundle exec rspec</code> でスペックを再生成します。差分チェックのパスも <code>doc/openapi.yaml</code> になります。</p>
+</div>
+
+<div class="pager">
+<a class="pager-btn" onclick="goPage(14)"><span class="dir">← 前のページ</span><span class="title">TanStack Queryと統合</span></a>
+<a class="pager-btn next" onclick="goPage(16)"><span class="dir">次のページ →</span><span class="title">componentsへのスキーマ分割</span></a>
+</div>
+</div></div>
+
+<!-- PAGE 16: components への分割 -->
+<div class="page" data-page="16">
+<div class="page-header"><div class="step-label">Chapter 16</div><h2>components へのスキーマ分割</h2><div class="desc">生成された YAML を $ref で整理して再利用性を高める</div></div>
+<div class="content">
+<h3>なぜ分割するのか</h3>
+<p>rspec-openapi が生成する YAML は、各エンドポイントのレスポンスボディのスキーマがそのままインラインで展開されます。同じ <code>Task</code> オブジェクトのスキーマが GET/POST/PATCH すべてに重複して記述されるため、スキーマを変更したい場合に修正箇所が複数になります。</p>
+<p><code>components/schemas</code> に共通スキーマを定義して <code>$ref</code> で参照することで、<strong>単一箇所の変更で全エンドポイントに反映</strong>できます。</p>
+
+<div class="callout callout-concept">
+<div class="callout-label">🧠 生成直後 vs 分割後のイメージ</div>
+<p><strong>生成直後</strong>：各 <code>responses</code> にスキーマがインライン展開されている。Task の定義が3〜4箇所に重複。</p>
+<p><strong>分割後</strong>：<code>components/schemas/Task</code> に一箇所定義し、各 <code>responses</code> から <code>$ref: '#/components/schemas/Task'</code> で参照する。</p>
+</div>
+
+<h3>生成直後のYAML（インライン展開）</h3>
+<div class="code-block"><div class="code-header"><span class="lang-dot lang-yaml"></span> doc/openapi.yaml（生成直後 — 抜粋）</div>
+<pre><code><span class="kw">paths</span>:
+  <span class="kw">/api/v1/tasks</span>:
+    <span class="kw">get</span>:
+      <span class="kw">responses</span>:
+        <span class="str">'200'</span>:
+          <span class="kw">content</span>:
+            <span class="kw">application/json</span>:
+              <span class="kw">schema</span>:
+                <span class="kw">type</span>: array
+                <span class="kw">items</span>:
+                  <span class="kw">type</span>: object          <span class="cm"># ← ここにインラインで定義</span>
+                  <span class="kw">properties</span>:
+                    <span class="kw">id</span>: { <span class="kw">type</span>: integer }
+                    <span class="kw">title</span>: { <span class="kw">type</span>: string }
+                    <span class="kw">description</span>: { <span class="kw">type</span>: string, <span class="kw">nullable</span>: true }
+                    <span class="kw">status</span>: { <span class="kw">type</span>: string }
+                    <span class="kw">created_at</span>: { <span class="kw">type</span>: string }
+                    <span class="kw">updated_at</span>: { <span class="kw">type</span>: string }
+  <span class="kw">/api/v1/tasks/{id}</span>:
+    <span class="kw">get</span>:
+      <span class="kw">responses</span>:
+        <span class="str">'200'</span>:
+          <span class="kw">content</span>:
+            <span class="kw">application/json</span>:
+              <span class="kw">schema</span>:
+                <span class="kw">type</span>: object          <span class="cm"># ← 同じ定義がまた出てくる</span>
+                <span class="kw">properties</span>:
+                  ...</code></pre></div>
+
+<h3>分割後のYAML</h3>
+<div class="code-block"><div class="code-header"><span class="lang-dot lang-yaml"></span> doc/openapi.yaml（分割後）</div>
+<pre><code><span class="kw">paths</span>:
+  <span class="kw">/api/v1/tasks</span>:
+    <span class="kw">get</span>:
+      <span class="kw">responses</span>:
+        <span class="str">'200'</span>:
+          <span class="kw">content</span>:
+            <span class="kw">application/json</span>:
+              <span class="kw">schema</span>:
+                <span class="kw">type</span>: array
+                <span class="kw">items</span>:
+                  <span class="str">$ref</span>: <span class="str">'#/components/schemas/Task'</span>   <span class="cm"># ← $ref で参照</span>
+  <span class="kw">/api/v1/tasks/{id}</span>:
+    <span class="kw">get</span>:
+      <span class="kw">responses</span>:
+        <span class="str">'200'</span>:
+          <span class="kw">content</span>:
+            <span class="kw">application/json</span>:
+              <span class="kw">schema</span>:
+                <span class="str">$ref</span>: <span class="str">'#/components/schemas/Task'</span>   <span class="cm"># ← 同じ $ref</span>
+
+<span class="kw">components</span>:
+  <span class="kw">schemas</span>:
+    <span class="kw">Task</span>:                                         <span class="cm"># ← ここに一元定義</span>
+      <span class="kw">type</span>: object
+      <span class="kw">required</span>:
+        - id
+        - title
+        - status
+        - created_at
+        - updated_at
+      <span class="kw">properties</span>:
+        <span class="kw">id</span>:
+          <span class="kw">type</span>: integer
+        <span class="kw">title</span>:
+          <span class="kw">type</span>: string
+          <span class="kw">maxLength</span>: 255
+        <span class="kw">description</span>:
+          <span class="kw">type</span>: string
+          <span class="kw">nullable</span>: true
+        <span class="kw">status</span>:
+          <span class="kw">type</span>: string
+          <span class="kw">enum</span>:                                   <span class="cm"># ← 手動で enum を追加</span>
+            - pending
+            - in_progress
+            - completed
+        <span class="kw">created_at</span>:
+          <span class="kw">type</span>: string
+          <span class="kw">format</span>: date-time
+        <span class="kw">updated_at</span>:
+          <span class="kw">type</span>: string
+          <span class="kw">format</span>: date-time
+
+    <span class="kw">ErrorResponse</span>:                               <span class="cm"># ← エラー形式も共通化</span>
+      <span class="kw">type</span>: object
+      <span class="kw">required</span>:
+        - errors
+      <span class="kw">properties</span>:
+        <span class="kw">errors</span>:
+          <span class="kw">type</span>: array
+          <span class="kw">items</span>:
+            <span class="kw">type</span>: string
+
+    <span class="kw">TaskInput</span>:                                    <span class="cm"># ← リクエストボディ用</span>
+      <span class="kw">type</span>: object
+      <span class="kw">required</span>:
+        - title
+      <span class="kw">properties</span>:
+        <span class="kw">title</span>:
+          <span class="kw">type</span>: string
+        <span class="kw">description</span>:
+          <span class="kw">type</span>: string
+          <span class="kw">nullable</span>: true
+        <span class="kw">status</span>:
+          <span class="kw">type</span>: string
+          <span class="kw">enum</span>: [pending, in_progress, completed]</code></pre></div>
+
+<div class="callout callout-tip">
+<div class="callout-label">✅ 手動調整は OPENAPI=1 実行後にマージされる</div>
+<p>rspec-openapi は <code>OPENAPI=1 rspec</code> 実行時に既存の YAML と<strong>マージ</strong>（差分適用）します。<code>components/schemas</code> に手動で追加した内容は保持されます。ただし、インライン展開の箇所を <code>$ref</code> に書き換えた場合、再生成時に上書きされる可能性があるため、<strong>分割作業は生成が落ち着いた後に行う</strong>のがおすすめです。</p>
+</div>
+
+<h3>リクエストボディへの $ref 適用</h3>
+<p>POST / PATCH のリクエストボディも同様に <code>$ref</code> で参照できます。</p>
+<div class="code-block"><div class="code-header"><span class="lang-dot lang-yaml"></span> POST のリクエストボディ（分割後）</div>
+<pre><code>  <span class="kw">/api/v1/tasks</span>:
+    <span class="kw">post</span>:
+      <span class="kw">requestBody</span>:
+        <span class="kw">required</span>: true
+        <span class="kw">content</span>:
+          <span class="kw">application/json</span>:
+            <span class="kw">schema</span>:
+              <span class="str">$ref</span>: <span class="str">'#/components/schemas/TaskInput'</span>
+      <span class="kw">responses</span>:
+        <span class="str">'201'</span>:
+          <span class="kw">content</span>:
+            <span class="kw">application/json</span>:
+              <span class="kw">schema</span>:
+                <span class="str">$ref</span>: <span class="str">'#/components/schemas/Task'</span>
+        <span class="str">'422'</span>:
+          <span class="kw">content</span>:
+            <span class="kw">application/json</span>:
+              <span class="kw">schema</span>:
+                <span class="str">$ref</span>: <span class="str">'#/components/schemas/ErrorResponse'</span></code></pre></div>
+
+<div class="pager">
+<a class="pager-btn" onclick="goPage(15)"><span class="dir">← 前のページ</span><span class="title">CIで整合性チェック</span></a>
+<a class="pager-btn next" onclick="goPage(17)"><span class="dir">次のページ →</span><span class="title">スペックのリファクタリング</span></a>
+</div>
+</div></div>
+
+<!-- PAGE 17: リファクタリング -->
+<div class="page" data-page="17">
+<div class="page-header"><div class="step-label">Chapter 17</div><h2>スペックのリファクタリング</h2><div class="desc">テストコードをより保守しやすくする tips</div></div>
+<div class="content">
+
+<h3>shared_examples でレスポンス構造を共通化</h3>
+<p>複数のエンドポイントで同じ「Task オブジェクトが返る」アサーションを繰り返すなら、<code>shared_examples</code> にまとめられます。</p>
+<div class="code-block"><div class="code-header"><span class="lang-dot lang-ruby"></span> spec/support/shared_examples.rb</div>
+<pre><code><span class="type">RSpec</span>.shared_examples <span class="str">"a task response"</span> <span class="kw">do</span>
+  <span class="kw">let</span>(<span class="sym">:json</span>) { <span class="type">JSON</span>.parse(response.body) }
+
+  it <span class="str">"includes required task fields"</span> <span class="kw">do</span>
+    expect(json).to include(
+      <span class="str">"id"</span> => be_a(<span class="type">Integer</span>),
+      <span class="str">"title"</span> => be_a(<span class="type">String</span>),
+      <span class="str">"status"</span> => be_in(%w[pending in_progress completed]),
+      <span class="str">"created_at"</span> => be_a(<span class="type">String</span>)
+    )
+  <span class="kw">end</span>
+<span class="kw">end</span></code></pre></div>
+
+<div class="code-block"><div class="code-header"><span class="lang-dot lang-ruby"></span> 使い方</div>
+<pre><code>describe <span class="str">"GET /api/v1/tasks/:id"</span> <span class="kw">do</span>
+  it <span class="str">"returns a task"</span> <span class="kw">do</span>
+    task = <span class="type">Task</span>.create!(title: <span class="str">"テスト"</span>)
+    get <span class="str">"/api/v1/tasks/#{task.id}"</span>
+
+    expect(response).to have_http_status(<span class="num">200</span>)
+    include_examples <span class="str">"a task response"</span>
+  <span class="kw">end</span>
+<span class="kw">end</span></code></pre></div>
+
+<h3>JSON ヘルパーを let で共有</h3>
+<div class="code-block"><div class="code-header"><span class="lang-dot lang-ruby"></span> spec/rails_helper.rb に追記</div>
+<pre><code><span class="type">RSpec</span>.configure <span class="kw">do</span> |config|
+  <span class="cm"># JSON レスポンスを簡単にパースするヘルパー</span>
+  config.include(<span class="type">Module</span>.new {
+    <span class="kw">def</span> <span class="fn">json</span>
+      <span class="type">JSON</span>.parse(response.body)
+    <span class="kw">end</span>
+  }, type: <span class="sym">:request</span>)
+<span class="kw">end</span></code></pre></div>
+
+<h3>JSON リクエストヘルパー</h3>
+<p>POST / PATCH で毎回 <code>headers: { "Content-Type" =&gt; "application/json" }</code> を書くのは冗長です。ヘルパーメソッドにまとめましょう。</p>
+<div class="code-block"><div class="code-header"><span class="lang-dot lang-ruby"></span> spec/support/request_helpers.rb</div>
+<pre><code><span class="kw">module</span> <span class="type">RequestHelpers</span>
+  <span class="kw">def</span> <span class="fn">json_post</span>(path, params: {})
+    post path,
+      params: params.to_json,
+      headers: { <span class="str">"Content-Type"</span> => <span class="str">"application/json"</span> }
+  <span class="kw">end</span>
+
+  <span class="kw">def</span> <span class="fn">json_patch</span>(path, params: {})
+    patch path,
+      params: params.to_json,
+      headers: { <span class="str">"Content-Type"</span> => <span class="str">"application/json"</span> }
+  <span class="kw">end</span>
+<span class="kw">end</span>
+
+<span class="type">RSpec</span>.configure <span class="kw">do</span> |config|
+  config.include <span class="type">RequestHelpers</span>, type: <span class="sym">:request</span>
+<span class="kw">end</span></code></pre></div>
+
+<div class="code-block"><div class="code-header"><span class="lang-dot lang-ruby"></span> ヘルパー使用後のテスト</div>
+<pre><code>it <span class="str">"creates a task"</span> <span class="kw">do</span>
+  json_post <span class="str">"/api/v1/tasks"</span>, params: { task: { title: <span class="str">"新しいタスク"</span> } }
+
+  expect(response).to have_http_status(<span class="num">201</span>)
+  expect(json[<span class="str">"title"</span>]).to eq(<span class="str">"新しいタスク"</span>)
+<span class="kw">end</span></code></pre></div>
+
+<h3>FactoryBot でテストデータを管理する</h3>
+<p>テストデータが増えてきたら <code>factory_bot_rails</code> を導入するとデータ作成が宣言的になります。</p>
+<div class="code-block"><div class="code-header"><span class="lang-dot lang-bash"></span> Gemfile に追加</div>
+<pre><code>bundle add factory_bot_rails --group <span class="str">"development,test"</span></code></pre></div>
+
+<div class="code-block"><div class="code-header"><span class="lang-dot lang-ruby"></span> spec/factories/tasks.rb</div>
+<pre><code><span class="type">FactoryBot</span>.define <span class="kw">do</span>
+  factory <span class="sym">:task</span> <span class="kw">do</span>
+    title { <span class="str">"テストタスク"</span> }
+    description { <span class="str">"テスト用の説明"</span> }
+    status { <span class="str">"pending"</span> }
+
+    trait <span class="sym">:in_progress</span> <span class="kw">do</span>
+      status { <span class="str">"in_progress"</span> }
+    <span class="kw">end</span>
+
+    trait <span class="sym">:completed</span> <span class="kw">do</span>
+      status { <span class="str">"completed"</span> }
+    <span class="kw">end</span>
+  <span class="kw">end</span>
+<span class="kw">end</span></code></pre></div>
+
+<div class="code-block"><div class="code-header"><span class="lang-dot lang-ruby"></span> FactoryBot 使用後のテスト</div>
+<pre><code><span class="cm"># 以前</span>
+<span class="type">Task</span>.create!(title: <span class="str">"テスト"</span>, description: <span class="str">"メモ"</span>, status: <span class="str">"pending"</span>)
+
+<span class="cm"># FactoryBot を使うと</span>
+create(<span class="sym">:task</span>)
+create(<span class="sym">:task</span>, <span class="sym">:completed</span>)
+create(<span class="sym">:task</span>, title: <span class="str">"カスタムタイトル"</span>)</code></pre></div>
+
+<div class="callout callout-tip">
+<div class="callout-label">✅ rspec-openapi とテストデータの品質</div>
+<p>rspec-openapi はテストのレスポンスからスキーマを推測するため、<strong>テストデータが豊富なほどスキーマの精度が上がります</strong>。FactoryBot の trait を活用して、<code>description: nil</code>（nullable 検出用）や各 status 値（enum の網羅）を持つデータを用意しましょう。</p>
+</div>
+
+<div class="pager">
+<a class="pager-btn" onclick="goPage(16)"><span class="dir">← 前のページ</span><span class="title">componentsへのスキーマ分割</span></a>
+<a class="pager-btn next" onclick="goPage(18)"><span class="dir">次のページ →</span><span class="title">まとめと3手法の比較</span></a>
+</div>
+</div></div>
+
+<!-- PAGE 18: まとめ -->
+<div class="page" data-page="18">
+<div class="page-header"><div class="step-label">Summary</div><h2>まとめと3手法の比較</h2><div class="desc">Design-First / RSwag / rspec-openapi の全体比較</div></div>
+<div class="content">
+<h3>3つのアプローチ総合比較</h3>
+<table class="info-table">
+<tr><th>観点</th><th>Design-First</th><th>Code-First<br>(RSwag)</th><th>Code-First<br>(rspec-openapi)</th></tr>
+<tr><td><strong>起点</strong></td><td>手書き YAML</td><td>RSwag DSL</td><td>普通の RSpec</td></tr>
+<tr><td><strong>スキーマの精度</strong></td><td>◎</td><td>○</td><td>△</td></tr>
+<tr><td><strong>導入の手軽さ</strong></td><td>△</td><td>○</td><td>◎</td></tr>
+<tr><td><strong>並行開発</strong></td><td>◎</td><td>△</td><td>△</td></tr>
+<tr><td><strong>既存APIへの後付け</strong></td><td>△</td><td>○</td><td>◎</td></tr>
+<tr><td><strong>Swagger UI</strong></td><td>別途設定</td><td>内蔵</td><td>別途設定</td></tr>
+<tr><td><strong>特別な DSL</strong></td><td>YAML</td><td>RSwag DSL</td><td>なし</td></tr>
+<tr><td><strong>enum 対応</strong></td><td>◎ 手動定義</td><td>◎ DSLで定義</td><td>△ 手動追加</td></tr>
+<tr><td><strong>フロント側</strong></td><td colspan="3" style="text-align:center">全て同じ（openapi-typescript + openapi-fetch + TanStack Query）</td></tr>
+</table>
+
+<h3>おすすめの選び方</h3>
+<div class="callout callout-tip">
+<div class="callout-label">✅ 実践的な判断基準</div>
+<p><strong>外部公開 API / 大規模チーム</strong> → Design-First（スペックが契約書）</p>
+<p><strong>新規の社内 API / 中規模チーム</strong> → Code-First（RSwag）</p>
+<p><strong>既存 API への後付け / 個人開発</strong> → Code-First（rspec-openapi）</p>
+<p><strong>段階的に導入</strong> → rspec-openapi で始めて → 必要に応じて RSwag に移行</p>
+</div>
+
+<h3>どのアプローチでも変わらないこと</h3>
+<p>アプローチがどれであっても、最終的に得られるものは同じです。</p>
+<ul>
+<li>OpenAPI 3.0 準拠のスペックファイル（YAML）</li>
+<li>TypeScript の型定義（自動生成）</li>
+<li>型安全な API 呼び出し（openapi-fetch）</li>
+<li>キャッシュ・状態管理（TanStack Query）</li>
+<li>CI での整合性チェック</li>
+</ul>
+<p>「スペックがどこから来るか」が違うだけで、<strong>フロントエンドの開発体験は完全に同じ</strong>です。</p>
+
+<div class="pager">
+<a class="pager-btn" onclick="goPage(17)"><span class="dir">← 前のページ</span><span class="title">スペックのリファクタリング</span></a>
+<div></div>
+</div>
+</div></div>
+
+</div></div>
+<div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+<script>
+const totalPages=19;
+function goPage(n){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sidebar-link').forEach(l=>l.classList.remove('active'));
+  const page=document.querySelector(`.page[data-page="${n}"]`);
+  const link=document.querySelector(`.sidebar-link[data-page="${n}"]`);
+  if(page)page.classList.add('active');
+  if(link){link.classList.add('active');link.scrollIntoView({block:'nearest'});}
+  document.getElementById('progress').style.width=((n+1)/totalPages*100)+'%';
+  window.scrollTo(0,0);
+  document.querySelector('.sidebar').classList.remove('open');
+}
+document.querySelectorAll('.sidebar-link').forEach(link=>{
+  link.addEventListener('click',()=>goPage(parseInt(link.dataset.page)));
+});
+</script>
+</body></html>
