@@ -40,5 +40,20 @@ module Backend
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
+
+    # ★ rspec-openapi が生成したスペックを参照
+    schema_path = Rails.root.join("doc", "openapi.yaml").to_s
+
+    config.middleware.use Committee::Middleware::RequestValidation,
+      schema_path: schema_path,
+      strict: true,
+      error_class: Committee::ValidationError
+
+    if Rails.env.development? || Rails.env.test?
+      config.middleware.use Committee::Middleware::ResponseValidation,
+        schema_path: schema_path,
+        raise: true
+    end
   end
 end
+

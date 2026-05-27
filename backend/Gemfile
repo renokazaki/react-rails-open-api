@@ -52,3 +52,5 @@ end
 gem "rspec-rails", "~> 8.0", groups: [:development, :test]
 
 gem "rspec-openapi", "~> 0.27.0", group: :test
+
+gem "swagger_ui_engine", "~> 1.1"
