@@ -55,4 +55,4 @@ gem "rspec-openapi", "~> 0.27.0", group: :test
 
 gem "committee", "~> 5.0"
 
-gem "swagger_ui_engine", "~> 1.1"
+gem "swagger_ui_engine", "~> 1.1", group: :development
