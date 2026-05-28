@@ -119,7 +119,7 @@ RSpec.describe "Tasks API", type: :request do
       task = Task.create!(title: "タスク")
 
       patch "/api/v1/tasks/#{task.id}",
-        params: { task: { title: "" } }.to_json,
+        params: { task: { title: "", status: "pending" } }.to_json,
         headers: { "Content-Type" => "application/json" }
 
       expect(response).to have_http_status(422)
@@ -128,7 +128,7 @@ RSpec.describe "Tasks API", type: :request do
 
     it "returns 404 for not found" do
       patch "/api/v1/tasks/999999",
-        params: { task: { title: "更新" } }.to_json,
+        params: { task: { title: "更新", status: "pending" } }.to_json,
         headers: { "Content-Type" => "application/json" }
 
       expect(response).to have_http_status(404)
