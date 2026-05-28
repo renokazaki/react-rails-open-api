@@ -85,8 +85,8 @@ export interface paths {
                          *       "title": "進行中タスク",
                          *       "description": null,
                          *       "status": "in_progress",
-                         *       "created_at": "2026-05-26T23:11:05.368Z",
-                         *       "updated_at": "2026-05-26T23:11:05.368Z"
+                         *       "created_at": "2026-01-01T00:00:00.000Z",
+                         *       "updated_at": "2026-01-01T00:00:00.000Z"
                          *     }
                          */
                         "application/json": {
@@ -157,8 +157,8 @@ export interface paths {
                          *       "title": "テスト",
                          *       "description": "メモ",
                          *       "status": "in_progress",
-                         *       "created_at": "2026-05-26T23:11:05.317Z",
-                         *       "updated_at": "2026-05-26T23:11:05.317Z"
+                         *       "created_at": "2026-01-01T00:00:00.000Z",
+                         *       "updated_at": "2026-01-01T00:00:00.000Z"
                          *     }
                          */
                         "application/json": {
@@ -255,6 +255,7 @@ export interface paths {
                     "application/json": {
                         task: {
                             title: string;
+                            description?: string;
                             status: string;
                         };
                     };
@@ -272,16 +273,16 @@ export interface paths {
                          *       "title": "更新後",
                          *       "status": "in_progress",
                          *       "id": 1,
-                         *       "description": null,
-                         *       "created_at": "2026-05-26T23:11:05.438Z",
-                         *       "updated_at": "2026-05-26T23:11:05.451Z"
+                         *       "description": "元の説明",
+                         *       "created_at": "2026-01-01T00:00:00.000Z",
+                         *       "updated_at": "2026-01-01T00:00:00.000Z"
                          *     }
                          */
                         "application/json": {
                             title: string;
                             status: string;
                             id: number;
-                            description: unknown;
+                            description: string | null;
                             created_at: string;
                             updated_at: string;
                         };

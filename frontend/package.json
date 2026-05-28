@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "generate:api": "openapi-typescript ../backend/doc/openapi.yaml -o src/openapi_schema/api_schema.ts"
+    "generate:api": "openapi-typescript ../backend/doc/openapi.yaml -o src/openapi_schema/api_schema.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "openapi-fetch": "^0.17.0",
