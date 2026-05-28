@@ -104,7 +104,7 @@ RSpec.describe "Tasks API", type: :request do
   # ── 更新 ──
   describe "PATCH /api/v1/tasks/:id" do
     it "updates a task" do
-      task = Task.create!(title: "元のタイトル", status: "pending")
+      task = Task.create!(title: "元のタイトル", description: "元の説明", status: "pending")
 
       patch "/api/v1/tasks/#{task.id}",
         params: { task: { title: "更新後", status: "in_progress" } }.to_json,
@@ -113,6 +113,7 @@ RSpec.describe "Tasks API", type: :request do
       expect(response).to have_http_status(200)
       expect(json["title"]).to eq("更新後")
       expect(json["status"]).to eq("in_progress")
+      expect(json["description"]).to eq("元の説明")
     end
 
     it "returns 422 for invalid update" do
