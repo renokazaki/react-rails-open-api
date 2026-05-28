@@ -234,11 +234,10 @@ paths:
                   properties:
                     title:
                       type: string
+                    description:
+                      type: string
                     status:
                       type: string
-                  required:
-                  - title
-                  - status
               required:
               - task
             example:
